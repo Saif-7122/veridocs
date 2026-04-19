@@ -34,11 +34,4 @@ API docs: http://localhost:8000/docs
 | `api/routes.py` | FastAPI endpoints |
 | `core/session.py` | In-memory session management |
 
-## Project Status
-- [ ] Layer 1: Ingestor
-- [ ] Layer 2: Embedder
-- [ ] Layer 3: Retriever
-- [ ] Layer 4: Chat
-- [ ] Layer 5: Insights
-- [ ] Layer 6: API routes wired up
-- [ ] Layer 7: Deploy to Render
+
