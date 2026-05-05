@@ -1,38 +1,49 @@
 import React, { useState } from 'react';
-import { MOCK_CHAT } from '../mockData';
+import { chatQuery } from '../api';
 
-const ChatView = () => {
-  const [messages, setMessages] = useState(
-    MOCK_CHAT.flatMap(c => [
-      { role: 'user', content: c.query },
-      { role: 'assistant', content: c.answer, citations: c.citations }
-    ])
-  );
+const ChatView = ({ sessionId }) => {
+  const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!input.trim()) return;
+    if (!input.trim() || !sessionId) return;
     
     setMessages(prev => [...prev, { role: 'user', content: input }]);
     const currentInput = input;
     setInput('');
     setLoading(true);
+    setError(null);
     
-    setTimeout(() => {
+    try {
+      const result = await chatQuery(sessionId, currentInput);
       setMessages(prev => [...prev, { 
         role: 'assistant', 
-        content: `This is a simulated response to: "${currentInput}". The backend would typically return contextual insights here.`,
-        citations: [{ source: "simulated.pdf", page: 1 }]
+        content: result.answer,
+        citations: result.citations,
+        isError: result.error
       }]);
+    } catch (err) {
+      setMessages(prev => [...prev, { 
+        role: 'assistant', 
+        content: "Error: " + err.message,
+        isError: true
+      }]);
+    } finally {
       setLoading(false);
-    }, 1200);
+    }
   };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 66px)', maxWidth: '1000px', margin: '0 auto' }}>
       <div style={{ flex: 1, padding: '32px', overflowY: 'auto' }}>
+        {messages.length === 0 && (
+          <div style={{ textAlign: 'center', color: '#999', marginTop: '40px' }}>
+            No messages yet. Ask a question about your documents!
+          </div>
+        )}
         {messages.map((m, i) => (
           <div key={i} style={{ 
             marginBottom: '24px', 
@@ -40,15 +51,15 @@ const ChatView = () => {
             justifyContent: m.role === 'user' ? 'flex-end' : 'flex-start' 
           }}>
             <div style={{
-              backgroundColor: m.role === 'user' ? '#111111' : '#FFFFFF',
+              backgroundColor: m.role === 'user' ? '#111111' : (m.isError ? '#ffebeb' : '#FFFFFF'),
               color: m.role === 'user' ? '#FFFFFF' : '#111111',
               padding: '16px 20px',
               borderRadius: '4px',
               maxWidth: '75%',
-              border: m.role === 'assistant' ? '1px solid #e0e0e0' : 'none',
+              border: m.role === 'assistant' ? (m.isError ? '1px solid #ffcccc' : '1px solid #e0e0e0') : 'none',
               boxShadow: m.role === 'assistant' ? '0 2px 4px rgba(0,0,0,0.05)' : 'none'
             }}>
-              <div style={{ lineHeight: '1.6' }}>{m.content}</div>
+              <div style={{ lineHeight: '1.6', whiteSpace: 'pre-wrap' }}>{m.content}</div>
               {m.citations && m.citations.length > 0 && (
                 <div style={{ marginTop: '12px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                   {m.citations.map((cit, idx) => (
@@ -96,7 +107,8 @@ const ChatView = () => {
             borderRadius: '4px',
             fontFamily: 'inherit',
             fontSize: '16px',
-            cursor: loading ? 'wait' : 'pointer'
+            cursor: loading ? 'wait' : 'pointer',
+            opacity: loading ? 0.7 : 1
           }}>
             Send
           </button>

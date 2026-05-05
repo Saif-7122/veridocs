@@ -1,11 +1,10 @@
 """
-Chat module — Gemini Flash API for answering questions with context.
+Chat module — Groq API for answering questions with context.
 Formats retrieved chunks into a prompt, returns answer + citations.
 """
 import os
-from typing import Any
-import google.generativeai as genai
-
+import time
+from groq import Groq
 
 SYSTEM_PROMPT = """You are VeriDocs, an intelligent document analysis assistant.
 You answer questions strictly based on the provided document context.
@@ -13,26 +12,19 @@ Always cite your sources by mentioning the document name and page number.
 If the answer is not in the context, say so clearly — do not hallucinate.
 Be concise, structured, and precise."""
 
-# We'll instantiate the model lazily or just cache it
-_model = None
+# Global client singleton
+_client = None
 
-def _get_model():
-    """Configure and return the Gemini GenerativeModel singleton."""
-    global _model
-    if _model is None:
-        api_key = os.getenv("GEMINI_API_KEY")
-        if not api_key or api_key == "your_gemini_api_key_here":
-            # Don't strictly fail on import so tests can be mocked, but log/warn if actually used
-            pass
-        else:
-            genai.configure(api_key=api_key)
-            
-        # Using Google's system_instruction param explicitly for 1.5 flash
-        _model = genai.GenerativeModel(
-            model_name="gemini-1.5-flash",
-            system_instruction=SYSTEM_PROMPT
-        )
-    return _model
+def _get_client():
+    """Configure and return the Groq client singleton."""
+    global _client
+    if _client is None:
+        api_key = os.getenv("GROQ_API_KEY")
+        if not api_key:
+            # Fallback for environment setup
+            return None
+        _client = Groq(api_key=api_key)
+    return _client
 
 
 def build_context_prompt(query: str, retrieved_chunks: list[dict]) -> str:
@@ -53,46 +45,58 @@ def build_context_prompt(query: str, retrieved_chunks: list[dict]) -> str:
         context_blocks.append(block)
 
     full_context = "\n\n".join(context_blocks)
-    
-    prompt = (
-        "CONTEXT:\n"
-        f"{full_context}\n\n"
-        "QUESTION:\n"
-        f"{query}"
-    )
-    return prompt
+    return f"CONTEXT:\n{full_context}\n\nQUESTION: {query}"
 
 
 def ask(query: str, retrieved_chunks: list[dict]) -> dict:
     """
-    Send prompt to Gemini Flash and return structured response.
-    
-    Returns:
-        {
-            "answer": str,
-            "citations": list[{"source": str, "page": int}],
-            "model": str
-        }
+    Send prompt to Groq with retry logic and return structured response.
     """
+    client = _get_client()
+    if not client:
+        return {
+            "answer": "Groq API key not configured.",
+            "citations": [],
+            "model": "llama-3.1-8b-instant",
+            "error": True
+        }
+
     prompt = build_context_prompt(query, retrieved_chunks)
-    model = _get_model()
-    
-    response = model.generate_content(prompt)
-    answer_text = response.text if response else "No response generated."
-    
-    # Provide the chunks used as citations (removing duplicates)
-    citations = []
-    seen = set()
-    for chunk in retrieved_chunks:
-        src = chunk.get("source", "Unknown")
-        pg = chunk.get("page", 1)
-        key = (src, pg)
-        if key not in seen:
-            citations.append({"source": src, "page": pg})
-            seen.add(key)
+
+    for attempt in range(3):
+        try:
+            response = client.chat.completions.create(
+                model="llama-3.1-8b-instant",
+                messages=[
+                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.2,
+                max_tokens=1024,
+            )
+            answer = response.choices[0].message.content
             
-    return {
-        "answer": answer_text.strip(),
-        "citations": citations,
-        "model": "gemini-1.5-flash"
-    }
+            # Provide the chunks used as citations (removing duplicates)
+            citations = list({
+                (c.get("source", "Unknown"), c.get("page", 1))
+                for c in retrieved_chunks
+            })
+            
+            return {
+                "answer": answer.strip() if answer else "No response generated.",
+                "citations": [{"source": s, "page": p} for s, p in citations],
+                "model": "llama-3.1-8b-instant",
+                "error": False
+            }
+        except Exception as e:
+            error_msg = str(e).lower()
+            if "rate" in error_msg and attempt < 2:
+                time.sleep(5 * (attempt + 1))
+                continue
+            
+            return {
+                "answer": "Something went wrong. Please try again.",
+                "citations": [],
+                "model": "llama-3.1-8b-instant",
+                "error": True
+            }

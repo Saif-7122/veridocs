@@ -5,11 +5,11 @@ This is what separates VeriDocs from a basic chatbot.
 import json
 import re
 from typing import Any
-from modules.chat import _get_model
+from modules.chat import _get_client
 
 def extract_themes(chunks: list[dict], source_name: str) -> list[str]:
     """
-    Extract 5 key themes/topics from a single document's chunks using Gemini.
+    Extract 5 key themes/topics from a single document's chunks using Groq.
     """
     # Grab chunks for this specific document
     doc_chunks = [c["text"] for c in chunks if c.get("source") == source_name]
@@ -29,9 +29,16 @@ def extract_themes(chunks: list[dict], source_name: str) -> list[str]:
     )
     
     try:
-        model = _get_model()
-        response = model.generate_content(prompt)
-        text = response.text.strip()
+        client = _get_client()
+        if not client:
+            return ["Groq not configured"]
+            
+        response = client.chat.completions.create(
+            model="llama-3.1-8b-instant",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.1,
+        )
+        text = response.choices[0].message.content.strip()
         # Clean up any potential markdown formatting the LLM might hallucinate
         if text.startswith("```json"):
             text = text[7:]
@@ -46,7 +53,10 @@ def extract_themes(chunks: list[dict], source_name: str) -> list[str]:
             return [str(t) for t in themes][:5]
         return []
     except Exception as e:
-        # Fallback if Gemini fails or returns malformed JSON
+        # Fallback if Groq fails or returns malformed JSON
+        error_msg = str(e).lower()
+        if "rate" in error_msg:
+            return ["API Rate Limit Hit"]
         return ["Error extracting themes"]
 
 
@@ -98,9 +108,21 @@ def compare_documents(chunks: list[dict]) -> dict:
     )
     
     try:
-        model = _get_model()
-        response = model.generate_content(prompt)
-        text = response.text.strip()
+        client = _get_client()
+        if not client:
+             return {
+                "agreements": [],
+                "contradictions": [],
+                "unique_to": {f: [] for f in filenames},
+                "summary": "Groq not configured"
+            }
+
+        response = client.chat.completions.create(
+            model="llama-3.1-8b-instant",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.1,
+        )
+        text = response.choices[0].message.content.strip()
         if text.startswith("```json"):
              text = text[7:]
         if text.startswith("```"):
@@ -118,6 +140,14 @@ def compare_documents(chunks: list[dict]) -> dict:
             "summary": data.get("summary", "")
         }
     except Exception as e:
+        error_msg = str(e).lower()
+        if "rate" in error_msg:
+             return {
+                "agreements": [],
+                "contradictions": [],
+                "unique_to": {f: [] for f in filenames},
+                "summary": "Groq API Rate Limit Exceeded."
+            }
         return {
             "agreements": [],
             "contradictions": [],

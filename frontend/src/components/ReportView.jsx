@@ -1,13 +1,37 @@
-import React from 'react';
-import { MOCK_REPORT } from '../mockData';
+import React, { useState, useEffect } from 'react';
+import { getReport } from '../api';
 
-const ReportView = () => {
+const ReportView = ({ sessionId }) => {
+  const [report, setReport] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (sessionId) {
+      fetchReport();
+    }
+  }, [sessionId]);
+
+  const fetchReport = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const reportText = await getReport(sessionId);
+      setReport(reportText);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleDownload = () => {
-    const blob = new Blob([MOCK_REPORT], { type: 'text/markdown' });
+    if (!report) return;
+    const blob = new Blob([report], { type: 'text/markdown' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'veridocs_report.md';
+    a.download = `veridocs_report_${sessionId || 'local'}.md`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -20,15 +44,19 @@ const ReportView = () => {
         <h2>Session Report</h2>
         <button 
           onClick={handleDownload}
+          disabled={loading || !report}
           style={{
             backgroundColor: '#CC4125', color: '#FFFFFF', padding: '10px 24px', 
             border: 'none', borderRadius: '4px', fontFamily: 'inherit', fontSize: '14px',
-            cursor: 'pointer'
+            cursor: (loading || !report) ? 'not-allowed' : 'pointer',
+            opacity: (loading || !report) ? 0.7 : 1
           }}>
           Download .md
         </button>
       </div>
       
+      {error && <div style={{ color: '#CC4125', marginBottom: '16px' }}>{error}</div>}
+
       <div style={{ 
         backgroundColor: '#FFFFFF', 
         padding: '40px', 
@@ -40,7 +68,7 @@ const ReportView = () => {
         lineHeight: '1.6',
         color: '#333'
       }}>
-        {MOCK_REPORT}
+        {loading ? 'Generating report...' : (report || 'No report available.')}
       </div>
     </div>
   );

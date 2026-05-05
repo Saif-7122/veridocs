@@ -99,31 +99,39 @@ async def chat(request: ChatRequest):
         raise HTTPException(status_code=404, detail="Session not found or expired")
         
     if not session["chunks"] or session["faiss_index"] is None:
-        return {"answer": "No documents indexed.", "citations": [], "session_id": request.session_id}
+        return {"answer": "No documents indexed.", "citations": [], "session_id": request.session_id, "error": False}
         
-    query_emb = embed_query(request.query)
-    retrieved = hybrid_search(
-        query=request.query,
-        query_embedding=query_emb,
-        faiss_index=session["faiss_index"],
-        bm25_index=session["bm25_index"],
-        chunks=session["chunks"],
-        top_k=6,
-        semantic_weight=0.6,
-        keyword_weight=0.4
-    )
-    
-    response_dict = ask(request.query, retrieved)
-    
-    # Save history
-    session.setdefault("query_history", []).append({
-        "query": request.query,
-        "answer": response_dict["answer"],
-        "citations": response_dict["citations"]
-    })
-    
-    response_dict["session_id"] = request.session_id
-    return response_dict
+    try:
+        query_emb = embed_query(request.query)
+        retrieved = hybrid_search(
+            query=request.query,
+            query_embedding=query_emb,
+            faiss_index=session["faiss_index"],
+            bm25_index=session["bm25_index"],
+            chunks=session["chunks"],
+            top_k=6,
+            semantic_weight=0.6,
+            keyword_weight=0.4
+        )
+        
+        response_dict = ask(request.query, retrieved)
+        
+        # Save history
+        session.setdefault("query_history", []).append({
+            "query": request.query,
+            "answer": response_dict["answer"],
+            "citations": response_dict["citations"]
+        })
+        
+        response_dict["session_id"] = request.session_id
+        return response_dict
+    except Exception as e:
+        return {
+            "answer": f"An error occurred: {str(e)}",
+            "citations": [],
+            "session_id": request.session_id,
+            "error": True
+        }
 
 
 @router.post("/compare")

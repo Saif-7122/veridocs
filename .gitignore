@@ -4,6 +4,7 @@ __pycache__/
 .env
 venv/
 .venv/
+veridocs/VeriDocs/
 uploads/*
 !uploads/.gitkeep
 *.faiss
