@@ -20,9 +20,10 @@ frontend/.env.production
 frontend/.env.development
 
 # App Specific
-uploads/*
+uploads/* 
 !uploads/.gitkeep
-veridocs/
+veridocs/*
+!veridocs/.gitkeep
 *.faiss
 *.pkl
 *.log

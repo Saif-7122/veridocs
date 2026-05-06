@@ -51,4 +51,4 @@ if os.path.exists(frontend_dist):
 else:
     @app.get("/")
     def root():
-        return {"message": "VeriDocs API is active. Frontend build not found at frontend/dist."}
+        return {"message": "VeriDocs API all  good. Frontend build not found at frontend/dist."}
