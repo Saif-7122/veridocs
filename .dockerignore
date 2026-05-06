@@ -1,0 +1,37 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+venv/
+.venv/
+build/
+dist/
+*.faiss
+*.pkl
+
+# Node / Frontend
+node_modules/
+frontend/node_modules/
+frontend/dist/
+
+# Environment / Secrets
+.env
+.env.local
+frontend/.env
+frontend/.env.local
+frontend/.env.production
+frontend/.env.development
+
+# Logs and Uploads
+*.log
+uploads/*
+!uploads/.gitkeep
+
+# OS
+.DS_Store
+Thumbs.db
