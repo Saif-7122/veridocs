@@ -22,6 +22,7 @@ frontend/.env.development
 # App Specific
 uploads/*
 !uploads/.gitkeep
+veridocs/
 *.faiss
 *.pkl
 *.log
