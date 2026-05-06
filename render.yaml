@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: veridocs
+    runtime: python
+    buildCommand: pip install -r requirements.txt && cd frontend && npm install && npm run build
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: GROQ_API_KEY
+        sync: false
+      - key: ENVIRONMENT
+        value: production
