@@ -57,7 +57,7 @@ def get_model() -> SentenceTransformer:
             logger.info("Loading sentence-transformer model: %s", MODEL_NAME)
             _model = SentenceTransformer(MODEL_NAME)
             logger.info(
-                "Model loaded — embedding dim: %d", _model.get_embedding_dimension()
+                "Model loaded — embedding dim: %d", _model.get_sentence_embedding_dimension()
             )
 
     return _model

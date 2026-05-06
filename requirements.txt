@@ -8,11 +8,10 @@ pypdf
 docx2txt
 langchain
 langchain-community
-langchain-google-genai
+groq
 sentence-transformers
 faiss-cpu
 rank_bm25
-google-generativeai
 numpy
 python-jose
 httpx

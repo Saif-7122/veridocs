@@ -37,39 +37,33 @@ const ChatView = ({ sessionId }) => {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 66px)', maxWidth: '1000px', margin: '0 auto' }}>
-      <div style={{ flex: 1, padding: '32px', overflowY: 'auto' }}>
+    <div className="view-container" style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 72px)', maxWidth: '1000px' }}>
+      <div style={{ flex: 1, padding: '20px 0', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '32px' }}>
         {messages.length === 0 && (
-          <div style={{ textAlign: 'center', color: '#999', marginTop: '40px' }}>
-            No messages yet. Ask a question about your documents!
+          <div className="empty-state">
+            <h2 style={{ marginBottom: '12px' }}>Consult your Documents</h2>
+            <p>Ask specific questions about the uploaded files to get AI-powered insights.</p>
           </div>
         )}
         {messages.map((m, i) => (
           <div key={i} style={{ 
-            marginBottom: '24px', 
             display: 'flex', 
             justifyContent: m.role === 'user' ? 'flex-end' : 'flex-start' 
           }}>
             <div style={{
-              backgroundColor: m.role === 'user' ? '#111111' : (m.isError ? '#ffebeb' : '#FFFFFF'),
-              color: m.role === 'user' ? '#FFFFFF' : '#111111',
-              padding: '16px 20px',
+              backgroundColor: m.role === 'user' ? 'var(--bg-dark)' : (m.isError ? '#fff5f5' : '#FFFFFF'),
+              color: m.role === 'user' ? 'white' : 'var(--text-main)',
+              padding: '20px 24px',
               borderRadius: '4px',
-              maxWidth: '75%',
-              border: m.role === 'assistant' ? (m.isError ? '1px solid #ffcccc' : '1px solid #e0e0e0') : 'none',
-              boxShadow: m.role === 'assistant' ? '0 2px 4px rgba(0,0,0,0.05)' : 'none'
+              maxWidth: '85%',
+              border: m.role === 'assistant' ? '1px solid var(--border-light)' : 'none',
+              boxShadow: m.role === 'assistant' ? 'var(--shadow-sm)' : 'none',
             }}>
-              <div style={{ lineHeight: '1.6', whiteSpace: 'pre-wrap' }}>{m.content}</div>
-              {m.citations && m.citations.length > 0 && (
-                <div style={{ marginTop: '12px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              <div style={{ whiteSpace: 'pre-wrap', lineHeight: '1.7' }}>{m.content}</div>
+              {m.role === 'assistant' && m.citations && m.citations.length > 0 && (
+                <div style={{ marginTop: '16px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                   {m.citations.map((cit, idx) => (
-                    <span key={idx} style={{
-                      backgroundColor: '#CC4125',
-                      color: '#FFFFFF',
-                      fontSize: '12px',
-                      padding: '4px 8px',
-                      borderRadius: '4px'
-                    }}>
+                    <span key={idx} className="pill" style={{ margin: 0 }}>
                       {cit.source} (p. {cit.page})
                     </span>
                   ))}
@@ -79,38 +73,32 @@ const ChatView = ({ sessionId }) => {
           </div>
         ))}
         {loading && (
-          <div style={{ color: '#666666', fontStyle: 'italic', padding: '16px' }}>Thinking...</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', color: 'var(--text-muted)' }}>
+            <div className="spinner"></div>
+            <span>Analyzing...</span>
+          </div>
         )}
       </div>
-      <div style={{ padding: '24px', borderTop: '1px solid #e0e0e0', backgroundColor: '#F5F5F5' }}>
+      
+      <div style={{ padding: '32px 0', borderTop: '1px solid var(--border-light)' }}>
         <form onSubmit={handleSubmit} style={{ display: 'flex', gap: '16px' }}>
           <input 
             type="text" 
             value={input}
             onChange={e => setInput(e.target.value)}
-            placeholder="Ask a question about your documents..."
+            placeholder="Ask a question..."
             style={{
               flex: 1,
               padding: '16px',
               fontFamily: 'inherit',
-              border: '1px solid #cccccc',
+              border: '1px solid #ccc',
               borderRadius: '4px',
               outline: 'none',
               fontSize: '16px'
             }}
           />
-          <button type="submit" disabled={loading} style={{
-            backgroundColor: '#CC4125',
-            color: '#FFFFFF',
-            padding: '0 32px',
-            border: 'none',
-            borderRadius: '4px',
-            fontFamily: 'inherit',
-            fontSize: '16px',
-            cursor: loading ? 'wait' : 'pointer',
-            opacity: loading ? 0.7 : 1
-          }}>
-            Send
+          <button type="submit" disabled={loading || !input.trim()} className="btn btn-primary">
+            Send Query
           </button>
         </form>
       </div>

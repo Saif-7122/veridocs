@@ -4,7 +4,7 @@
  * Base URL points to the FastAPI server via Vite's proxy.
  */
 
-const API_BASE = "/api/v1";
+const API_URL = import.meta.env.VITE_API_URL;
 
 /**
  * Upload files to the backend. Returns session metadata.
@@ -16,7 +16,7 @@ export async function uploadFiles(files) {
     formData.append("files", file);
   }
 
-  const res = await fetch(`${API_BASE}/upload`, {
+  const res = await fetch(`${API_URL}/upload`, {
     method: "POST",
     body: formData,
   });
@@ -35,7 +35,7 @@ export async function uploadFiles(files) {
  * @param {string} query
  */
 export async function chatQuery(sessionId, query) {
-  const res = await fetch(`${API_BASE}/chat`, {
+  const res = await fetch(`${API_URL}/chat`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ session_id: sessionId, query }),
@@ -54,7 +54,7 @@ export async function chatQuery(sessionId, query) {
  * @param {string} sessionId
  */
 export async function getInsights(sessionId) {
-  const res = await fetch(`${API_BASE}/insights/${sessionId}`);
+  const res = await fetch(`${API_URL}/insights/${sessionId}`);
 
   if (!res.ok) {
     const errText = await res.text();
@@ -69,7 +69,7 @@ export async function getInsights(sessionId) {
  * @param {string} sessionId
  */
 export async function compareDocs(sessionId) {
-  const res = await fetch(`${API_BASE}/compare`, {
+  const res = await fetch(`${API_URL}/compare`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ session_id: sessionId }),
@@ -88,7 +88,7 @@ export async function compareDocs(sessionId) {
  * @param {string} sessionId
  */
 export async function getReport(sessionId) {
-  const res = await fetch(`${API_BASE}/report/${sessionId}`);
+  const res = await fetch(`${API_URL}/report/${sessionId}`);
 
   if (!res.ok) {
     const errText = await res.text();
@@ -103,7 +103,7 @@ export async function getReport(sessionId) {
  * @param {string} sessionId
  */
 export async function deleteSession(sessionId) {
-  const res = await fetch(`${API_BASE}/session/${sessionId}`, {
+  const res = await fetch(`${API_URL}/session/${sessionId}`, {
     method: "DELETE",
   });
 

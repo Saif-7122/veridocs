@@ -57,29 +57,31 @@ const UploadView = ({ onComplete }) => {
   };
 
   return (
-    <div style={{ padding: '60px', maxWidth: '800px', margin: '0 auto', textAlign: 'center' }}>
-      <h1 style={{ marginBottom: '16px', color: '#111111' }}>Document Ingestion</h1>
-      <p style={{ color: '#666666', marginBottom: '40px' }}>Upload your PDFs and DOCX files to begin analysis.</p>
+    <div className="view-container">
+      <div className="empty-state" style={{ paddingBottom: '20px' }}>
+        <h1 style={{ marginBottom: '16px' }}>Document Ingestion</h1>
+        <p>Upload your PDFs or Word documents to begin the AI analysis.</p>
+      </div>
       
       <div 
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         onClick={handleFileClick}
+        className="card"
         style={{ 
-          border: `2px dashed ${isDragging ? '#CC4125' : '#cccccc'}`, 
+          border: `2px dashed ${isDragging ? 'var(--primary)' : '#ccc'}`, 
           padding: '60px', 
           backgroundColor: isDragging ? '#fdf8f7' : '#FFFFFF',
-          borderRadius: '4px',
-          marginBottom: '40px',
+          textAlign: 'center',
           cursor: 'pointer',
-          transition: 'all 0.2s ease-in-out'
+          marginBottom: '32px'
         }}
       >
-        <p style={{ color: '#CC4125', fontWeight: 'bold', marginBottom: '8px' }}>
+        <p style={{ color: 'var(--primary)', fontWeight: 'bold', marginBottom: '8px', fontSize: '18px' }}>
           {isDragging ? 'Drop files now' : 'Drag & Drop files here'}
         </p>
-        <p style={{ color: '#999999', fontSize: '14px' }}>or click to browse</p>
+        <p style={{ color: '#999', fontSize: '14px' }}>Supports .pdf, .docx, .doc</p>
         <input 
           type="file" 
           multiple 
@@ -89,44 +91,47 @@ const UploadView = ({ onComplete }) => {
         />
       </div>
 
-      <div style={{ textAlign: 'left', marginBottom: '40px', backgroundColor: '#FFFFFF', padding: '16px', borderRadius: '4px', border: '1px solid #e0e0e0' }}>
-        <h3 style={{ marginBottom: '16px', fontSize: '16px', borderBottom: '1px solid #eee', paddingBottom: '8px' }}>Queue ({files.length})</h3>
-        {files.map((f, i) => (
-          <div key={i} style={{ padding: '8px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div style={{ display: 'flex', alignItems: 'center' }}>
-              <span style={{ color: '#CC4125', marginRight: '8px' }}>📄</span>
-              {f.name}
+      {files.length > 0 && (
+        <div className="card">
+          <h3 style={{ marginBottom: '16px', fontSize: '16px', borderBottom: '1px solid #eee', paddingBottom: '8px' }}>
+            Queue ({files.length} files)
+          </h3>
+          {files.map((f, i) => (
+            <div key={i} style={{ padding: '8px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <span style={{ color: 'var(--primary)', marginRight: '12px' }}>📄</span>
+                {f.name}
+              </div>
+              <button 
+                onClick={(e) => { e.stopPropagation(); removeFile(i); }}
+                style={{ background: 'none', border: 'none', color: '#999', cursor: 'pointer', fontSize: '14px' }}
+              >
+                Remove
+              </button>
             </div>
-            <button 
-              onClick={() => removeFile(i)}
-              style={{ background: 'none', border: 'none', color: '#999', cursor: 'pointer', fontSize: '16px', padding: '4px 8px' }}
-              title="Remove file"
-            >
-              ✕
-            </button>
-          </div>
-        ))}
+          ))}
+        </div>
+      )}
+
+      {loading && (
+        <div style={{ textAlign: 'center', marginBottom: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
+          <div className="spinner"></div>
+          <span style={{ color: 'var(--text-muted)' }}>Processing documents...</span>
+        </div>
+      )}
+
+      {error && <div style={{ color: 'var(--primary)', marginBottom: '24px', textAlign: 'center' }}>{error}</div>}
+
+      <div style={{ textAlign: 'center' }}>
+        <button
+          onClick={handleAnalyze}
+          disabled={loading || files.length === 0}
+          className="btn btn-primary"
+          style={{ width: '100%', maxWidth: '300px' }}
+        >
+          Analyse Documents
+        </button>
       </div>
-
-      {error && <div style={{ color: '#CC4125', marginBottom: '16px' }}>{error}</div>}
-
-      <button
-        onClick={handleAnalyze}
-        disabled={loading || files.length === 0}
-        style={{
-          backgroundColor: '#CC4125',
-          color: '#FFFFFF',
-          padding: '12px 32px',
-          border: 'none',
-          borderRadius: '4px',
-          fontFamily: 'inherit',
-          fontSize: '16px',
-          cursor: (loading || files.length === 0) ? 'not-allowed' : 'pointer',
-          opacity: (loading || files.length === 0) ? 0.7 : 1
-        }}
-      >
-        {loading ? 'Processing Documents...' : 'Analyse Documents'}
-      </button>
     </div>
   );
 };

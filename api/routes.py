@@ -16,7 +16,11 @@ from modules.retriever import build_faiss_index, build_bm25_index, hybrid_search
 from modules.chat import ask
 from modules.insights import extract_themes, compare_documents, generate_report
 
+import logging
+
 router = APIRouter()
+logger = logging.getLogger(__name__)
+
 UPLOAD_DIR = "uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
@@ -51,42 +55,59 @@ async def upload_documents(files: list[UploadFile] = File(...)):
     outlines = {}
     saved_files = []
     
-    for f in files:
-        # Validate extension
-        ext = os.path.splitext(f.filename)[1].lower()
-        if ext not in [".pdf", ".docx", ".doc"]:
-            raise HTTPException(status_code=415, detail=f"Unsupported file type: {ext}")
+    try:
+        for f in files:
+            logger.info(f"Processing file: {f.filename}")
+            # Validate extension
+            ext = os.path.splitext(f.filename)[1].lower()
+            if ext not in [".pdf", ".docx", ".doc"]:
+                logger.warning(f"Unsupported file type: {ext}")
+                raise HTTPException(status_code=415, detail=f"Unsupported file type: {ext}")
+                
+            file_path = os.path.join(session_dir, f.filename)
+            with open(file_path, "wb") as buffer:
+                shutil.copyfileobj(f.file, buffer)
+                
+            saved_files.append(f.filename)
+            session["files"].append(file_path)
             
-        file_path = os.path.join(session_dir, f.filename)
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(f.file, buffer)
+            # Ingest
+            logger.info(f"Ingesting file: {f.filename}")
+            chunks, outline = load_and_chunk(file_path)
+            all_chunks.extend(chunks)
+            outlines[f.filename] = outline
+            logger.info(f"Extracted {len(chunks)} chunks and {len(outline)} outline items from {f.filename}")
             
-        saved_files.append(f.filename)
-        session["files"].append(file_path)
+        session["doc_outlines"] = outlines
+        session["chunks"] = all_chunks
         
-        # Ingest
-        chunks, outline = load_and_chunk(file_path)
-        all_chunks.extend(chunks)
-        outlines[f.filename] = outline
-        
-    session["doc_outlines"] = outlines
-    session["chunks"] = all_chunks
-    
-    if all_chunks:
-        # Embed and index
-        embeddings = embed_chunks(all_chunks)
-        session["embeddings"] = embeddings
-        session["faiss_index"] = build_faiss_index(embeddings)
-        session["bm25_index"]  = build_bm25_index(all_chunks)
-        
-    session["query_history"] = []
-        
-    return {
-        "session_id": session_id,
-        "files": saved_files,
-        "outlines": outlines,
-        "status": "ready"
-    }
+        if all_chunks:
+            # Embed and index
+            logger.info(f"Embedding {len(all_chunks)} chunks...")
+            embeddings = embed_chunks(all_chunks)
+            session["embeddings"] = embeddings
+            
+            logger.info("Building FAISS index...")
+            session["faiss_index"] = build_faiss_index(embeddings)
+            
+            logger.info("Building BM25 index...")
+            session["bm25_index"]  = build_bm25_index(all_chunks)
+            
+        session["query_history"] = []
+        logger.info(f"Upload complete for session {session_id}")
+            
+        return {
+            "session_id": session_id,
+            "files": saved_files,
+            "outlines": outlines,
+            "status": "ready"
+        }
+    except Exception as e:
+        logger.error(f"Error during upload for session {session_id}: {str(e)}", exc_info=True)
+        # Clean up if needed
+        if os.path.exists(session_dir):
+            shutil.rmtree(session_dir)
+        raise HTTPException(status_code=500, detail=f"Internal server error during processing: {str(e)}")
 
 
 @router.post("/chat")

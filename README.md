@@ -4,34 +4,44 @@ Intelligent document analysis platform. Upload contracts, research papers, or an
 
 ## Stack
 - **Backend:** FastAPI + Python 3.11
-- **LLM:** Google Gemini Flash (free tier)
-- **Embeddings:** sentence-transformers `all-MiniLM-L6-v2` (local, no API cost)
-- **Vector Search:** FAISS (semantic) + BM25 (keyword) hybrid
-- **Frontend:** React (separate repo)
+- **LLM:** Groq (Llama-3.1-8b-instant)
+- **Embeddings:** `all-MiniLM-L6-v2` (Local Sentence-Transformers)
+- **Vector Search:** FAISS (Semantic) + BM25 (Keyword) Hybrid
+- **Frontend:** React (Integrated & served by FastAPI)
 
-## Setup
-```bash
-git clone <repo>
-cd veridocs
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-pip install -r requirements.txt
-cp .env.example .env
-# Add your GEMINI_API_KEY to .env
-uvicorn main:app --reload
-```
+## Setup & Running
+1. **Prepare Environment:**
+   ```powershell
+   python -m venv venv
+   .\venv\Scripts\Activate.ps1
+   pip install -r requirements.txt
+   cp .env.example .env
+   # Add your GROQ_API_KEY to .env
+   ```
 
-API docs: http://localhost:8000/docs
+2. **Build Frontend (Required once):**
+   ```powershell
+   cd frontend
+   npm install
+   npm run build
+   cd ..
+   ```
 
-## Module Responsibilities
-| Module | What it does |
+3. **Start Application:**
+   ```powershell
+   uvicorn main:app --reload
+   ```
+
+The application will be available at: **http://localhost:8000**
+
+## Project Structure
+| Module | Responsibility |
 |---|---|
-| `modules/ingestor.py` | Parse PDFs/DOCX, extract outline, chunk text |
-| `modules/embedder.py` | Local embeddings via sentence-transformers |
-| `modules/retriever.py` | FAISS + BM25 hybrid search |
-| `modules/chat.py` | Gemini Flash Q&A with citations |
-| `modules/insights.py` | Doc comparison, themes, report generation |
-| `api/routes.py` | FastAPI endpoints |
-| `core/session.py` | In-memory session management |
+| `main.py` | Entry point & Static file serving |
+| `modules/ingestor.py` | PDF/DOCX parsing & chunking |
+| `modules/chat.py` | Groq-powered Q&A |
+| `modules/insights.py` | Comparison & Report logic |
+| `frontend/` | React source code |
+| `render.yaml` | Deployment config for Render.com |
 
 

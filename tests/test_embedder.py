@@ -28,7 +28,7 @@ class TestEmbedder:
         assert isinstance(model, SentenceTransformer)
         
         # Verify it has the correct properties rather than unreliable internal names
-        assert model.get_embedding_dimension() == EMBED_DIM
+        assert model.get_sentence_embedding_dimension() == EMBED_DIM
 
     def test_get_model_is_singleton(self):
         # The model should be instantiated only once

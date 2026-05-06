@@ -19,15 +19,15 @@ function App() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <div className="app-container" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <Nav currentView={view} onViewChange={setView} hasSession={hasSession} />
       
-      <div style={{ flex: 1 }}>
+      <main className="main-content" style={{ flex: 1, position: 'relative' }}>
         {view === 'upload' && <UploadView onComplete={handleUploadComplete} />}
         {view === 'chat' && <ChatView sessionId={sessionId} />}
         {view === 'compare' && <CompareView sessionId={sessionId} />}
         {view === 'report' && <ReportView sessionId={sessionId} />}
-      </div>
+      </main>
     </div>
   );
 }

@@ -38,37 +38,45 @@ const ReportView = ({ sessionId }) => {
     URL.revokeObjectURL(url);
   };
 
+  const renderMarkdown = (text) => {
+    if (!text) return null;
+    return text.split('\n').map((line, i) => {
+      // Bold
+      let content = line;
+      if (line.startsWith('# ')) return <h1 key={i}>{line.substring(2)}</h1>;
+      if (line.startsWith('## ')) return <h2 key={i} style={{ marginTop: '24px' }}>{line.substring(3)}</h2>;
+      if (line.startsWith('### ')) return <h3 key={i} style={{ marginTop: '16px' }}>{line.substring(4)}</h3>;
+      if (line.startsWith('- ')) return <li key={i} style={{ marginLeft: '20px' }}>{line.substring(2)}</li>;
+      
+      // Basic bold/italic parsing could go here but let's keep it simple
+      return <p key={i} style={{ marginBottom: '12px' }}>{content}</p>;
+    });
+  };
+
   return (
-    <div style={{ padding: '40px', maxWidth: '800px', margin: '0 auto' }}>
+    <div className="view-container">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
-        <h2>Session Report</h2>
+        <h2>Session Summary Report</h2>
         <button 
           onClick={handleDownload}
           disabled={loading || !report}
-          style={{
-            backgroundColor: '#CC4125', color: '#FFFFFF', padding: '10px 24px', 
-            border: 'none', borderRadius: '4px', fontFamily: 'inherit', fontSize: '14px',
-            cursor: (loading || !report) ? 'not-allowed' : 'pointer',
-            opacity: (loading || !report) ? 0.7 : 1
-          }}>
+          className="btn btn-primary"
+        >
           Download .md
         </button>
       </div>
       
-      {error && <div style={{ color: '#CC4125', marginBottom: '16px' }}>{error}</div>}
+      {error && <div style={{ color: 'var(--primary)', marginBottom: '16px' }}>{error}</div>}
 
-      <div style={{ 
-        backgroundColor: '#FFFFFF', 
-        padding: '40px', 
-        borderRadius: '4px', 
-        border: '1px solid #e0e0e0',
-        whiteSpace: 'pre-wrap',
-        fontFamily: 'monospace',
-        fontSize: '14px',
-        lineHeight: '1.6',
-        color: '#333'
-      }}>
-        {loading ? 'Generating report...' : (report || 'No report available.')}
+      <div className="card" style={{ minHeight: '500px' }}>
+        {loading ? (
+          <div className="empty-state">
+            <div className="spinner" style={{ marginBottom: '16px' }}></div>
+            <p>Compiling document intelligence report...</p>
+          </div>
+        ) : (
+          report ? renderMarkdown(report) : <div className="empty-state">No report data generated yet.</div>
+        )}
       </div>
     </div>
   );
