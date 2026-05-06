@@ -19,29 +19,30 @@ Intelligent document analysis platform. Upload contracts, research papers, or an
    # Add your GROQ_API_KEY to .env
    ```
 
-2. **Build Frontend (Required once):**
+2. **Start Frontend (Development):**
    ```powershell
    cd frontend
    npm install
-   npm run build
-   cd ..
+   npm run dev
    ```
 
-3. **Start Application:**
+3. **Start Backend (Development):**
    ```powershell
    uvicorn main:app --reload
    ```
 
-The application will be available at: **http://localhost:8000**
+## Deployment
+- **Backend (Render):** Deploys automatically via `render.yaml`. Connect your repo to Render as a **Web Service**.
+- **Frontend (Vercel):** Deploys automatically via `vercel.json`. Connect the `frontend/` folder to Vercel.
 
 ## Project Structure
 | Module | Responsibility |
 |---|---|
-| `main.py` | Entry point & Static file serving |
+| `main.py` | FastAPI entry point |
 | `modules/ingestor.py` | PDF/DOCX parsing & chunking |
 | `modules/chat.py` | Groq-powered Q&A |
 | `modules/insights.py` | Comparison & Report logic |
-| `frontend/` | React source code |
-| `render.yaml` | Deployment config for Render.com |
+| `frontend/` | React source code (Deploy to Vercel) |
+| `render.yaml` | Backend deployment config (Render.com) |
 
 
