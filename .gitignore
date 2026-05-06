@@ -1,15 +1,30 @@
+# Python
 __pycache__/
 *.py[cod]
 *.egg-info/
-.env
 venv/
 .venv/
-veridocs/VeriDocs/
+dist/
+build/
+
+# Environment & Secrets
+.env
+.env.local
+
+# Frontend
+node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/.env.local
+frontend/.env.production
+frontend/.env.development
+
+# App Specific
 uploads/*
 !uploads/.gitkeep
 *.faiss
 *.pkl
-.DS_Store
 *.log
-dist/
-build/
+
+# OS
+.DS_Store
